@@ -19,7 +19,6 @@ def create_connection(database):
         return conn
     except:
         print("Unable to connect to DB")
-        exit()
 
 # Connect to the database
 db_conn = create_connection(database)
