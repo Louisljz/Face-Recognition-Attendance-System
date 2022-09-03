@@ -4,7 +4,8 @@ import os
 
 def rename(instance, filename):
     main_dir = "student_faces"
-    return os.path.join(main_dir, f"{instance}.jpg")
+    ext = os.path.splitext(filename)[1]
+    return os.path.join(main_dir, f"{instance}{ext}")
 
 class student_face(models.Model):
     name = models.CharField(max_length=50)
@@ -12,3 +13,12 @@ class student_face(models.Model):
     
     def __str__(self):
         return self.name
+
+
+class attendance(models.Model):
+    name = models.CharField(max_length=50)
+    time = models.TimeField()
+
+    def __str__(self):
+        return self.name
+
