@@ -2,11 +2,27 @@ import cv2
 import numpy as np
 import face_recognition
 import os
+from pathlib import Path
 from datetime import datetime
+import sqlite3
 
 
 BASE_DIR = os.path.dirname(__file__)
+parent = Path(BASE_DIR).parent
+
+database = os.path.join(parent, "db.sqlite3")
 path = os.path.join(BASE_DIR, 'student_faces')
+
+def create_connection(database):
+    try:
+        conn = sqlite3.connect(database)
+        return conn
+    except:
+        print("Unable to connect to DB")
+        exit()
+
+# Connect to the database
+db_conn = create_connection(database)
 
 images = []
 classNames = []
@@ -30,19 +46,23 @@ def findEncodings(images):
     return encodeList
 
 def markAttendance(name):
-    path = os.path.join(BASE_DIR, 'attendance.csv')
-    with open(path,'r+') as f:
-        myDataList = f.readlines()
-        nameList = []
+    result = db_conn.execute('''
+    SELECT * FROM webapp_attendance
+    ''')
+    record_list = result.fetchall()
+    nameList = []
 
-        for line in myDataList:
-            entry = line.split(',')
-            nameList.append(entry[0])
-        
-        if name not in nameList:
-            now = datetime.now()
-            dtString = now.strftime('%H:%M:%S')
-            f.writelines(f'\n{name},{dtString}')
+    for record in record_list:
+        nameList.append(record[1])
+    
+    if name not in nameList:
+        now = datetime.now()
+        dtString = now.strftime('%H:%M:%S')
+        db_conn.execute('''
+                        INSERT INTO webapp_attendance (name, time)
+                        VALUES (?, ?)
+                        ''', (name, dtString))
+        db_conn.commit()
 
 encodeListKnown = findEncodings(images)
 print('Encoding Complete')
