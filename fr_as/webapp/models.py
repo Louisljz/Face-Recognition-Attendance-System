@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils.html import mark_safe
-import face_recognition
 import os
 # Create your models here.
 
