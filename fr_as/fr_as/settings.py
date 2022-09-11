@@ -125,4 +125,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, "aten_monitor/")
+MEDIA_ROOT = os.path.join(BASE_DIR, "aten_monitor/student_faces")
+
+MEDIA_URL = 'media/'

@@ -31,9 +31,9 @@ myList = os.listdir(path)
 for cl in myList:
     curImg = cv2.imread(f'{path}/{cl}')
     images.append(curImg)
-    classNames.append(os.path.splitext(cl)[0])
+    classNames.append(os.path.splitext(cl)[0][:-1])
 
-print(classNames)
+print(list(set(classNames)))
 
 def findEncodings(images):
     encodeList = []
