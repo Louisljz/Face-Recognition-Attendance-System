@@ -34,3 +34,21 @@ class attendance(models.Model):
     def __str__(self):
         return self.name
 
+
+class Secondary_1(student_face):
+    pass
+
+class Secondary_2(student_face):
+    pass
+
+class Secondary_3(student_face):
+    pass
+
+class Secondary_4(student_face):
+    pass
+
+class PreU_1(student_face):
+    pass
+
+class PreU_2(student_face):
+    pass
