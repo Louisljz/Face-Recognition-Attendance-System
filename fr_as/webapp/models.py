@@ -12,9 +12,18 @@ class Rename:
         return f"{instance}{self.number}{ext}"
 
 
-class student_face(models.Model):
+class student_profile(models.Model):
     name = models.CharField(max_length=50)
+    grade = models.CharField(max_length=3, choices=(
+                                    ('S1', 'Secondary_1'),
+                                    ('S2', 'Secondary_2'),
+                                    ('S3', 'Secondary_3'), 
+                                    ('S4', 'Secondary_4'), 
+                                    ('PU1', 'PreU_1'),
+                                    ('PU2', 'PreU_2')
+                                    ))
     presence = models.BooleanField(default=False)
+    time = models.TimeField(blank=True, null=True)
     status = models.BooleanField(blank=True, null=True)
 
     photo1 = models.ImageField(upload_to=Rename(1).save)
@@ -30,25 +39,6 @@ class student_face(models.Model):
         return self.name
 
 
-class Secondary_1(student_face):
-    pass
-
-class Secondary_2(student_face):
-    pass
-
-class Secondary_3(student_face):
-    pass
-
-class Secondary_4(student_face):
-    pass
-
-class PreU_1(student_face):
-    pass
-
-class PreU_2(student_face):
-    pass
-
-
 class face_encodings(models.Model):
     name = models.CharField(max_length=50)
     encoding1 = models.BinaryField()
@@ -61,16 +51,7 @@ class face_encodings(models.Model):
 
 class calendar(models.Model):
     date = models.DateField()
-    late_students = models.TextField()
+    late_students = models.ManyToManyField(student_profile)
 
     def __str__(self):
         return str(self.date)
-
-# class late_student(models.Model):
-#     date = models.ForeignKey(calendar, on_delete=models.CASCADE)
-#     name = models.CharField(max_length=50)
-#     time = models.TimeField()
-
-#     def __str__(self):
-#         return self.name
-
