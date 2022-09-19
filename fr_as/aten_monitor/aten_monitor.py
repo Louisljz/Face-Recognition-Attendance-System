@@ -5,13 +5,13 @@ import os
 from pathlib import Path
 from datetime import datetime
 import sqlite3
+import pickle
+import base64
 
 
-BASE_DIR = os.path.dirname(__file__)
-parent = Path(BASE_DIR).parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-database = os.path.join(parent, "db.sqlite3")
-path = os.path.join(BASE_DIR, 'student_faces')
+database = os.path.join(BASE_DIR, "db.sqlite3")
 
 def create_connection(database):
     try:
@@ -20,84 +20,90 @@ def create_connection(database):
     except:
         print("Unable to connect to DB")
 
-# Connect to the database
 db_conn = create_connection(database)
 
-images = []
+result = db_conn.execute('''
+SELECT * FROM webapp_student_profile
+''')
+record_list = result.fetchall()
+
 classNames = []
+encodeListKnown = []
 
-myList = os.listdir(path)
+for i in range(len(record_list)):
+    label = record_list[i][1] + f' ({record_list[i][2]})'
+    
+    encoding1 = record_list[i][6]
+    encoding2 = record_list[i][7]
+    encoding3 = record_list[i][8]
 
-for cl in myList:
-    curImg = cv2.imread(f'{path}/{cl}')
-    images.append(curImg)
-    classNames.append(os.path.splitext(cl)[0][:-1])
+    if encoding1:
+        encodeListKnown.append(encoding1)
+        classNames.append(label)
+    if encoding2:
+        encodeListKnown.append(encoding2)
+        classNames.append(label)
+    if encoding3:
+        encodeListKnown.append(encoding3)
+        classNames.append(label)
 
 print(list(set(classNames)))
+print(len(classNames))
+print(len(encodeListKnown))
 
-def findEncodings(images):
-    encodeList = []
+# CONTINUE FROM HERE
+# def markAttendance(name):
+#     result = db_conn.execute('''
+#     SELECT * FROM webapp_attendance
+#     ''')
+#     record_list = result.fetchall()
+#     nameList = []
 
-    for img in images:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        encode = face_recognition.face_encodings(img)[0]
-        encodeList.append(encode)
-    return encodeList
-
-def markAttendance(name):
-    result = db_conn.execute('''
-    SELECT * FROM webapp_attendance
-    ''')
-    record_list = result.fetchall()
-    nameList = []
-
-    for record in record_list:
-        nameList.append(record[1])
+#     for record in record_list:
+#         nameList.append(record[1])
     
-    if name not in nameList:
-        now = datetime.now()
-        dtString = now.strftime('%H:%M:%S')
-        db_conn.execute('''
-                        INSERT INTO webapp_attendance (name, time)
-                        VALUES (?, ?)
-                        ''', (name, dtString))
-        db_conn.commit()
+#     if name not in nameList:
+#         now = datetime.now()
+#         dtString = now.strftime('%H:%M:%S')
+#         db_conn.execute('''
+#                         INSERT INTO webapp_attendance (name, time)
+#                         VALUES (?, ?)
+#                         ''', (name, dtString))
+#         db_conn.commit()
 
-encodeListKnown = findEncodings(images)
-print('Encoding Complete')
 
-cap = cv2.VideoCapture(0)
+# cap = cv2.VideoCapture(0)
 
-while True:
-    success, img = cap.read()
+# while True:
+#     success, img = cap.read()
 
-    imgS = cv2.resize(img,(0,0),None,0.25,0.25)
-    imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
+#     imgS = cv2.resize(img,(0,0),None,0.25,0.25)
+#     imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
     
-    facesCurFrame = face_recognition.face_locations(imgS)
-    encodesCurFrame = face_recognition.face_encodings(imgS,facesCurFrame)
+#     facesCurFrame = face_recognition.face_locations(imgS)
+#     encodesCurFrame = face_recognition.face_encodings(imgS,facesCurFrame)
     
-    for encodeFace,faceLoc in zip(encodesCurFrame,facesCurFrame):
-        matches = face_recognition.compare_faces(encodeListKnown,encodeFace)
-        faceDis = face_recognition.face_distance(encodeListKnown,encodeFace)
+#     for encodeFace,faceLoc in zip(encodesCurFrame,facesCurFrame):
+#         matches = face_recognition.compare_faces(encodeListKnown,encodeFace)
+#         faceDis = face_recognition.face_distance(encodeListKnown,encodeFace)
 
-        matchIndex = np.argmin(faceDis)
+#         matchIndex = np.argmin(faceDis)
         
-        if faceDis[matchIndex] < 0.50:
-            name = classNames[matchIndex].upper()
-            markAttendance(name)
-        else: 
-            name = 'Unknown'
+#         if faceDis[matchIndex] < 0.50:
+#             name = classNames[matchIndex]
+#             markAttendance(name)
+#         else: 
+#             name = 'Unknown'
         
-        y1,x2,y2,x1 = faceLoc
-        y1, x2, y2, x1 = y1*4,x2*4,y2*4,x1*4
-        cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0),2)
-        cv2.rectangle(img,(x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
-        cv2.putText(img,name,(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
+#         y1,x2,y2,x1 = faceLoc
+#         y1, x2, y2, x1 = y1*4,x2*4,y2*4,x1*4
+#         cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0),2)
+#         cv2.rectangle(img,(x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
+#         cv2.putText(img,name,(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
     
-    cv2.imshow('Webcam',img)
-    if cv2.waitKey(1) &0xFF == ord('q'):
-        break
+#     cv2.imshow('Webcam',img)
+#     if cv2.waitKey(1) &0xFF == ord('q'):
+#         break
 
-cap.release()
-cv2.destroyAllWindows()
+# cap.release()
+# cv2.destroyAllWindows()
