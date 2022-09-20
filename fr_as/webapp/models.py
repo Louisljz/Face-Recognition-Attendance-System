@@ -48,9 +48,6 @@ class attendance(models.Model):
     time = models.TimeField(blank=True, null=True)
 
     def __str__(self):
-        obj = student_profile.objects.get(name=self.name)
-        self.grade = obj.grade
-        self.save()
         return str(self.name)
 
 

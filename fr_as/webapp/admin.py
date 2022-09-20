@@ -81,7 +81,7 @@ class atten_admin(DjangoObjectActions, admin.ModelAdmin):
 
 class calen_admin(DjangoObjectActions, admin.ModelAdmin):
     list_display = ['date', 'get_students']
-    ordering = ['date']
+    ordering = ['-date']
 
     def has_add_permission(self, request):
         return False
