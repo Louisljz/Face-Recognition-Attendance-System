@@ -1,5 +1,4 @@
 from datetime import date
-from unicodedata import name
 from django.contrib import admin, messages
 from django_object_actions import DjangoObjectActions
 from .models import *
@@ -11,39 +10,53 @@ import pickle
 import base64
 
 
-def img_to_encod(url):
+def img_to_encod(request, photo, url):
     resp = urllib.request.urlopen(url)
     arr = np.asarray(bytearray(resp.read()), dtype="uint8")
     img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    encode = np.array([])
 
-    encode = face_recognition.face_encodings(img)[0]
+    if len(face_recognition.face_encodings(img)) == 0:
+        messages.error(request, f'Cannot Find a Face in {photo}')
+    elif len(face_recognition.face_encodings(img)) > 1:
+        messages.error(request, f'Multiple Faces in {photo}')
+    else:
+        encode = face_recognition.face_encodings(img)[0]
+
     return encode
+
 
 @admin.action(description='Generate Face Encodings')
 def generate_encod(modeladmin, request, queryset):
-    local_host = 'http://127.0.0.1:8000/'
+    local_host = 'http://10.0.0.24:8000/'
 
     for obj in queryset:
         if obj.photo1:
-            encod = img_to_encod(local_host+obj.photo1.url)
-            np_bytes = pickle.dumps(encod)
-            np_base64 = base64.b64encode(np_bytes)
-            obj.encoding1 = np_base64
-            obj.save()
+            photo = f'{obj.name}, Photo 1'
+            encod = img_to_encod(request, photo, local_host+obj.photo1.url)
+            if encod.size > 0:
+                np_bytes = pickle.dumps(encod)
+                np_base64 = base64.b64encode(np_bytes)
+                obj.encoding1 = np_base64
+                obj.save()
 
         if obj.photo2:
-            encod = img_to_encod(local_host+obj.photo2.url)
-            np_bytes = pickle.dumps(encod)
-            np_base64 = base64.b64encode(np_bytes)
-            obj.encoding2 = np_base64
-            obj.save()
+            photo = f'{obj.name}, Photo 2'
+            encod = img_to_encod(request, photo, local_host+obj.photo2.url)
+            if encod.size > 0:
+                np_bytes = pickle.dumps(encod)
+                np_base64 = base64.b64encode(np_bytes)
+                obj.encoding2 = np_base64
+                obj.save()
             
         if obj.photo3:
-            encod = img_to_encod(local_host+obj.photo3.url)
-            np_bytes = pickle.dumps(encod)
-            np_base64 = base64.b64encode(np_bytes)
-            obj.encoding3 = np_base64
-            obj.save()
+            photo = f'{obj.name}, Photo 3'
+            encod = img_to_encod(request, photo, local_host+obj.photo3.url)
+            if encod.size > 0:
+                np_bytes = pickle.dumps(encod)
+                np_base64 = base64.b64encode(np_bytes)
+                obj.encoding3 = np_base64
+                obj.save()
 
     messages.info(request, 'Encodings have been generated!')
 
@@ -84,9 +97,6 @@ class calen_admin(DjangoObjectActions, admin.ModelAdmin):
     ordering = ['-date']
 
     def has_add_permission(self, request):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
         return False
 
     def has_change_permission(self, request, obj=None):

@@ -89,3 +89,48 @@ db_conn = create_connection(database)
 
 # if byte:
 #     print('yes')
+
+# from pathlib import Path
+
+# BASE_DIR = Path(__file__).resolve().parent.parent
+# MEDIA_ROOT = os.path.join(BASE_DIR, "aten_monitor/student_faces")
+
+# newpath = os.path.join(MEDIA_ROOT, 'c/')
+
+# if not os.path.exists(newpath):
+#     print("hi")
+#     os.makedirs(newpath)
+
+# print(newpath)
+
+# text = 'louis'
+# print(text[0])
+
+# import pickle
+# import base64
+# import numpy as np
+
+# encode = None
+
+# np_bytes = pickle.dumps(encode)
+# np_base64 = base64.b64encode(np_bytes)
+
+# if np_base64:
+#     print(encode)
+#     print(np_base64)
+#     np_bytes = base64.b64decode(np_base64)
+#     np_array = pickle.loads(np_bytes)
+#     print(np_array)
+
+# state = None
+
+# state = 'hi'
+
+# print(state)
+
+# import numpy as np
+
+# x = np.array([])
+
+# if x.size > 0:
+#     print('hi')
