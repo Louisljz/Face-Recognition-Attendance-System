@@ -14,14 +14,17 @@ def img_to_encod(request, photo, url):
     resp = urllib.request.urlopen(url)
     arr = np.asarray(bytearray(resp.read()), dtype="uint8")
     img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-    encode = np.array([])
+    resized_img = imutils.resize(img, width=500)
 
-    if len(face_recognition.face_encodings(img)) == 0:
+    encode = np.array([])
+    faceEncodList = face_recognition.face_encodings(resized_img)
+
+    if len(faceEncodList) == 0:
         messages.error(request, f'Cannot Find a Face in {photo}')
-    elif len(face_recognition.face_encodings(img)) > 1:
+    elif len(faceEncodList) > 1:
         messages.error(request, f'Multiple Faces in {photo}')
     else:
-        encode = face_recognition.face_encodings(img)[0]
+        encode = faceEncodList[0]
 
     return encode
 
