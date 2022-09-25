@@ -1,6 +1,7 @@
 from datetime import date
 from django.contrib import admin, messages
 from django_object_actions import DjangoObjectActions
+from fr_as.settings import MEDIA_ROOT
 from .models import *
 import cv2
 import face_recognition
@@ -10,11 +11,14 @@ import pickle
 import base64
 
 
-def img_to_encod(request, photo, url):
+def img_to_encod(request, path, photo, url):
     resp = urllib.request.urlopen(url)
     arr = np.asarray(bytearray(resp.read()), dtype="uint8")
     img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
     resized_img = imutils.resize(img, width=500)
+
+    filepath = os.path.join(MEDIA_ROOT, str(path))
+    cv2.imwrite(filepath, resized_img)
 
     encode = np.array([])
     faceEncodList = face_recognition.face_encodings(resized_img)
@@ -31,47 +35,51 @@ def img_to_encod(request, photo, url):
 
 @admin.action(description='Generate Face Encodings')
 def generate_encod(modeladmin, request, queryset):
-    local_host = 'http://10.0.0.24:8000/'
+    local_host = 'http://127.0.0.1:8000/'
 
     for obj in queryset:
         if obj.photo1:
             photo = f'{obj.name}, Photo 1'
-            encod = img_to_encod(request, photo, local_host+obj.photo1.url)
+            encod = img_to_encod(request, obj.photo1, photo, local_host+obj.photo1.url)
             if encod.size > 0:
                 np_bytes = pickle.dumps(encod)
                 np_base64 = base64.b64encode(np_bytes)
                 obj.encoding1 = np_base64
-                obj.save()
 
         if obj.photo2:
             photo = f'{obj.name}, Photo 2'
-            encod = img_to_encod(request, photo, local_host+obj.photo2.url)
+            encod = img_to_encod(request, obj.photo2, photo, local_host+obj.photo2.url)
             if encod.size > 0:
                 np_bytes = pickle.dumps(encod)
                 np_base64 = base64.b64encode(np_bytes)
                 obj.encoding2 = np_base64
-                obj.save()
-            
+        else:
+            obj.encoding2 = b''
+
         if obj.photo3:
             photo = f'{obj.name}, Photo 3'
-            encod = img_to_encod(request, photo, local_host+obj.photo3.url)
+            encod = img_to_encod(request, obj.photo3, photo, local_host+obj.photo3.url)
             if encod.size > 0:
                 np_bytes = pickle.dumps(encod)
                 np_base64 = base64.b64encode(np_bytes)
                 obj.encoding3 = np_base64
-                obj.save()
+        else:
+            obj.encoding3 = b''
+
+        obj.save()
 
     messages.info(request, 'Encodings have been generated!')
 
 
 class stud_admin(admin.ModelAdmin):
-    readonly_fields = ['image_tag']
-    list_display = ['name', 'grade']
+    readonly_fields = ['image_tag', 'status']
+    list_display = ['name', 'grade', 'status']
     ordering = ['name', 'grade']
+    list_filter = ['status']
     actions = [generate_encod]
 
 
-class atten_admin(DjangoObjectActions, admin.ModelAdmin):
+class atten_admin(admin.ModelAdmin):
     list_filter = ['presence', 'grade']
     list_display = ['name', 'grade', 'presence', 'time']
     ordering = ['name', 'grade']
@@ -79,20 +87,8 @@ class atten_admin(DjangoObjectActions, admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
-    def has_delete_permission(self, request, obj=None):
-        return False
-
     def has_change_permission(self, request, obj=None):
         return False
-
-    def create(modeladmin, request, queryset):
-        attendance.objects.all().delete()
-        profiles = student_profile.objects.all()
-        for obj in profiles:
-            student = attendance(name=obj, grade=obj.grade)
-            student.save()
-
-    changelist_actions = ['create']
 
 
 class calen_admin(DjangoObjectActions, admin.ModelAdmin):
@@ -113,6 +109,11 @@ class calen_admin(DjangoObjectActions, admin.ModelAdmin):
         if date.today() not in past_dates:
             new_date = calendar(date=date.today())
             new_date.save()
+            attendance.objects.all().delete()
+            profiles = student_profile.objects.all()
+            for obj in profiles:
+                student = attendance(name=obj, grade=obj.grade)
+                student.save()
 
     changelist_actions = ['create']
 
