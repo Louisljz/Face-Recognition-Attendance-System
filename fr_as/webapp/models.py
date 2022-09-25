@@ -1,8 +1,5 @@
-from unicodedata import name
 from django.db import models
 from django.utils.html import mark_safe
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 import os
 import urllib
 import numpy as np
@@ -49,8 +46,6 @@ class student_profile(models.Model):
     encoding2 = models.BinaryField(blank=True, editable=False)
     encoding3 = models.BinaryField(blank=True, editable=False)
 
-    status = models.BooleanField(default=False)
-
     photoUI = models.ImageField(editable=False, blank=True)
     
     def image_tag(self):
@@ -90,18 +85,6 @@ class student_profile(models.Model):
     def __str__(self):
         return self.name
 
-
-@receiver(post_save, sender=student_profile)
-def save_func(sender, instance, **kwargs):
-    status = True
-    if instance.photo1 and not instance.encoding1:
-        status = False
-    if instance.photo2 and not instance.encoding2:
-        status = False
-    if instance.photo3 and not instance.encoding3:
-        status = False
-
-    sender.objects.filter(name=instance.name).update(status=status)
 
 class attendance(models.Model):
     name = models.ForeignKey(student_profile, on_delete=models.CASCADE)

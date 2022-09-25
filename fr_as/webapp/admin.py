@@ -33,50 +33,70 @@ def img_to_encod(request, path, photo, url):
     return encode
 
 
-@admin.action(description='Generate Face Encodings')
-def generate_encod(modeladmin, request, queryset):
-    local_host = 'http://127.0.0.1:8000/'
-
-    for obj in queryset:
-        if obj.photo1:
-            photo = f'{obj.name}, Photo 1'
-            encod = img_to_encod(request, obj.photo1, photo, local_host+obj.photo1.url)
-            if encod.size > 0:
-                np_bytes = pickle.dumps(encod)
-                np_base64 = base64.b64encode(np_bytes)
-                obj.encoding1 = np_base64
-
-        if obj.photo2:
-            photo = f'{obj.name}, Photo 2'
-            encod = img_to_encod(request, obj.photo2, photo, local_host+obj.photo2.url)
-            if encod.size > 0:
-                np_bytes = pickle.dumps(encod)
-                np_base64 = base64.b64encode(np_bytes)
-                obj.encoding2 = np_base64
-        else:
-            obj.encoding2 = b''
-
-        if obj.photo3:
-            photo = f'{obj.name}, Photo 3'
-            encod = img_to_encod(request, obj.photo3, photo, local_host+obj.photo3.url)
-            if encod.size > 0:
-                np_bytes = pickle.dumps(encod)
-                np_base64 = base64.b64encode(np_bytes)
-                obj.encoding3 = np_base64
-        else:
-            obj.encoding3 = b''
-
-        obj.save()
-
-    messages.info(request, 'Encodings have been generated!')
+def convert(encod):
+    if encod.size > 0:
+        np_bytes = pickle.dumps(encod)
+        np_base64 = base64.b64encode(np_bytes)
+        return np_base64
 
 
-class stud_admin(admin.ModelAdmin):
-    readonly_fields = ['image_tag', 'status']
-    list_display = ['name', 'grade', 'status']
+def create_attendance():
+    past_dates = []
+    for obj in calendar.objects.all():
+        past_dates.append(obj.date)
+
+    if date.today() in past_dates:
+        calendar.objects.get(date=date.today()).delete()
+    
+    new_date = calendar(date=date.today())
+    new_date.save()
+    attendance.objects.all().delete()
+    profiles = student_profile.objects.all()
+    for obj in profiles:
+        student = attendance(name=obj, grade=obj.grade)
+        student.save()
+
+
+class stud_admin(DjangoObjectActions, admin.ModelAdmin):
+    readonly_fields = ['image_tag']
+    list_display = ['name', 'grade']
     ordering = ['name', 'grade']
-    list_filter = ['status']
-    actions = [generate_encod]
+
+    def create(modeladmin, request, queryset):
+        local_host = 'http://127.0.0.1:8000/'
+        objects = student_profile.objects.all()
+        if len(objects) > 0:
+            for obj in objects:
+                if obj.photo1:
+                    if not obj.encoding1:
+                        photo = f'{obj.name}, Photo 1'
+                        encod = img_to_encod(request, obj.photo1, photo, local_host+obj.photo1.url)
+                        obj.encoding1 = convert(encod)
+                else:
+                    obj.encoding1 = b''
+
+                if obj.photo2:
+                    if not obj.encoding2:
+                        photo = f'{obj.name}, Photo 2'
+                        encod = img_to_encod(request, obj.photo2, photo, local_host+obj.photo2.url)
+                        obj.encoding2 = convert(encod)
+                else:
+                    obj.encoding2 = b''
+
+                if obj.photo3:
+                    if not obj.encoding3:
+                        photo = f'{obj.name}, Photo 3'
+                        encod = img_to_encod(request, obj.photo3, photo, local_host+obj.photo3.url)
+                        obj.encoding3 = convert(encod)
+                else:
+                    obj.encoding3 = b''
+
+                obj.save()
+
+            create_attendance()
+            messages.info(request, 'Attendance Sheet Created!')
+
+    changelist_actions = ['create']
 
 
 class atten_admin(admin.ModelAdmin):
@@ -100,22 +120,6 @@ class calen_admin(DjangoObjectActions, admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
-
-    def create(modeladmin, request, queryset):
-        past_dates = []
-        for obj in calendar.objects.all():
-            past_dates.append(obj.date)
-
-        if date.today() not in past_dates:
-            new_date = calendar(date=date.today())
-            new_date.save()
-            attendance.objects.all().delete()
-            profiles = student_profile.objects.all()
-            for obj in profiles:
-                student = attendance(name=obj, grade=obj.grade)
-                student.save()
-
-    changelist_actions = ['create']
 
 
 admin.site.register(student_profile, stud_admin)
