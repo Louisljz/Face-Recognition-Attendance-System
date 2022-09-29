@@ -44,12 +44,11 @@ def create_attendance():
     past_dates = []
     for obj in calendar.objects.all():
         past_dates.append(obj.date)
-
-    if date.today() in past_dates:
-        calendar.objects.get(date=date.today()).delete()
     
-    new_date = calendar(date=date.today())
-    new_date.save()
+    if date.today() not in past_dates:
+        new_date = calendar(date=date.today())
+        new_date.save()
+    
     attendance.objects.all().delete()
     profiles = student_profile.objects.all()
     for obj in profiles:
@@ -63,7 +62,7 @@ class stud_admin(DjangoObjectActions, admin.ModelAdmin):
     ordering = ['name', 'grade']
 
     def create(modeladmin, request, queryset):
-        local_host = 'http://127.0.0.1:8000/'
+        local_host = 'http://10.0.0.20:8000/'
         objects = student_profile.objects.all()
         if len(objects) > 0:
             for obj in objects:
