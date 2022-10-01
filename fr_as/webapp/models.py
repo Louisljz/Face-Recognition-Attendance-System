@@ -42,15 +42,15 @@ class student_profile(models.Model):
     photo2 = models.ImageField(upload_to=Rename(2).save, blank=True)
     photo3 = models.ImageField(upload_to=Rename(3).save, blank=True)
     
-    encoding1 = models.BinaryField(editable=False)
-    encoding2 = models.BinaryField(blank=True, editable=False)
-    encoding3 = models.BinaryField(blank=True, editable=False)
+    encoding1 = models.BinaryField(blank=True, null=True, editable=False)
+    encoding2 = models.BinaryField(blank=True, null=True, editable=False)
+    encoding3 = models.BinaryField(blank=True, null=True, editable=False)
 
     photoUI = models.ImageField(editable=False, blank=True)
     
     def image_tag(self):
         if self.photo1:
-            local_host = 'http://10.0.0.20:8000/'
+            local_host = 'http://10.0.0.10:8000/'
             image_url = local_host + self.photo1.url
             resp = urllib.request.urlopen(image_url)
             arr = np.asarray(bytearray(resp.read()), dtype="uint8")
