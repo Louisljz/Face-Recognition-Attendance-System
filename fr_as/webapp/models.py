@@ -82,6 +82,20 @@ class student_profile(models.Model):
 
     image_tag.short_description = 'Face'
 
+    def save(self, *args, **kwargs):
+        try:
+            obj = student_profile.objects.get(pk=self.pk)
+        except student_profile.DoesNotExist:
+            pass 
+        else:
+            if not obj.photo1 == self.photo1: 
+                self.encoding1 = b''
+            if not obj.photo2 == self.photo2: 
+                self.encoding2 = b''
+            if not obj.photo3 == self.photo3: 
+                self.encoding3 = b''
+        super(student_profile, self).save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
