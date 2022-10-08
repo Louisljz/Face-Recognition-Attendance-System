@@ -47,20 +47,31 @@ class student_profile(models.Model):
     encoding3 = models.BinaryField(blank=True, null=True, editable=False)
 
     photoUI = models.ImageField(editable=False, blank=True)
+
+    def fetch_img(self):
+        local_host = 'http://10.0.0.10:8000/'
+        image_url = local_host + self.photo1.url
+        resp = urllib.request.urlopen(image_url)
+        arr = np.asarray(bytearray(resp.read()), dtype="uint8")
+        img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        return img
+
+    def set_filepath(self):
+        path = os.path.join(MEDIA_ROOT, 'PhotoUI')
+        filename = self.name + '_PhotoUI.jpg'
+        filepath = os.path.join(path, filename)
+        return filepath
+
+    def insert_text(self, img, filepath, text):
+        image = imutils.resize(img, width=200)
+        cv2.putText(image,text,(0, int(image.shape[0]/2)),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),2)
+        cv2.imwrite(filepath, image)
     
     def image_tag(self):
         if self.photo1:
-            local_host = 'http://10.0.0.10:8000/'
-            image_url = local_host + self.photo1.url
-            resp = urllib.request.urlopen(image_url)
-            arr = np.asarray(bytearray(resp.read()), dtype="uint8")
-            img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+            img = self.fetch_img()
+            filepath = self.set_filepath()
             resized_img = imutils.resize(img, width=500)
-
-            path = os.path.join(MEDIA_ROOT, 'PhotoUI')
-            filename = self.name + '_PhotoUI.jpg'
-            filepath = os.path.join(path, filename)
-
             faceLocList = face_recognition.face_locations(resized_img)
 
             if len(faceLocList) == 1:
@@ -70,10 +81,14 @@ class student_profile(models.Model):
 
                 face_img = imutils.resize(cropped_img, width=200)
                 cv2.imwrite(filepath, face_img)
+
+            elif len(faceLocList) > 1:
+                text = 'MANY FACES'
+                self.insert_text(resized_img, filepath, text)
+            
             else:
-                noface_img = imutils.resize(resized_img, width=200)
-                cv2.putText(noface_img,'NO FACE',(0, int(noface_img.shape[0]/2)),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),2)
-                cv2.imwrite(filepath, noface_img)
+                text = 'NO FACE'
+                self.insert_text(resized_img, filepath, text)
 
             self.photoUI = filepath
             self.save()

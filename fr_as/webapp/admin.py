@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django_object_actions import DjangoObjectActions
 from .models import *
-from .views import create_encodings
+from .CreateEncods import CreateEncods
 
 
 class stud_admin(DjangoObjectActions, admin.ModelAdmin):
@@ -10,7 +10,8 @@ class stud_admin(DjangoObjectActions, admin.ModelAdmin):
     ordering = ['name', 'grade']
 
     def generate(modeladmin, request, queryset):
-        create_encodings(request)
+        encodings = CreateEncods()
+        encodings.create_encodings(request)
 
     changelist_actions = ['generate']
 

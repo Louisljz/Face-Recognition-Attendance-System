@@ -1,86 +1,7 @@
-from django.shortcuts import render
-from django.contrib import messages
-from fr_as.settings import MEDIA_ROOT
-from .models import *
 from datetime import date
-import cv2
-import face_recognition
-import urllib
-import numpy as np
-import pickle
-import base64
-
-
-# Create your views here.
-def img_to_encod(request, path, photo, url):
-    resp = urllib.request.urlopen(url)
-    arr = np.asarray(bytearray(resp.read()), dtype="uint8")
-    img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-    resized_img = imutils.resize(img, width=500)
-
-    filepath = os.path.join(MEDIA_ROOT, str(path))
-    cv2.imwrite(filepath, resized_img)
-
-    encode = np.array([])
-    faceEncodList = face_recognition.face_encodings(resized_img)
-
-    if len(faceEncodList) == 0:
-        messages.error(request, f'Cannot Find a Face in {photo}')
-        error_message.append(f'Cannot Find a Face in {photo}')
-    elif len(faceEncodList) > 1:
-        messages.error(request, f'Multiple Faces in {photo}')
-        error_message.append(f'Multiple Faces in {photo}')
-    else:
-        encode = faceEncodList[0]
-
-    return encode
-
-
-def convert(encod):
-    if encod.size > 0:
-        np_bytes = pickle.dumps(encod)
-        np_base64 = base64.b64encode(np_bytes)
-        return np_base64
-
-
-def create_encodings(request):
-    global error_message
-    error_message = []
-    
-    local_host = 'http://10.0.0.10:8000/'
-    objects = student_profile.objects.all()
-    if len(objects) > 0:
-        for obj in objects:
-            if obj.photo1:
-                if not obj.encoding1:
-                    photo = f'{obj.name}, Photo 1'
-                    encod = img_to_encod(request, obj.photo1, photo, local_host+obj.photo1.url)
-                    obj.encoding1 = convert(encod)
-            else:
-                obj.encoding1 = b''
-
-            if obj.photo2:
-                if not obj.encoding2:
-                    photo = f'{obj.name}, Photo 2'
-                    encod = img_to_encod(request, obj.photo2, photo, local_host+obj.photo2.url)
-                    obj.encoding2 = convert(encod)
-            else:
-                obj.encoding2 = b''
-
-            if obj.photo3:
-                if not obj.encoding3:
-                    photo = f'{obj.name}, Photo 3'
-                    encod = img_to_encod(request, obj.photo3, photo, local_host+obj.photo3.url)
-                    obj.encoding3 = convert(encod)
-            else:
-                obj.encoding3 = b''
-
-            obj.save()
-
-        if not error_message:
-            messages.success(request, 'Attendance Ready To Be Taken!')
-        else:
-            messages.warning(request, 'Please fix the problem before continuing!')
+from django.shortcuts import render
+from .models import *
+from .CreateEncods import CreateEncods
 
 
 def create_attendance():
@@ -106,7 +27,10 @@ def app(request):
     return render(request, 'app.html')
 
 def stream(request):
-    create_encodings(request)
+    encodings = CreateEncods()
+    encodings.create_encodings(request)
     create_attendance()
+    if not encodings.error_message:
+        pass
 
     return render(request, 'stream.html')
