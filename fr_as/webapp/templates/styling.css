@@ -87,6 +87,7 @@ ul.topnav li a.active {background-color: #04AA6D;}
 ul.topnav li.right {float: right;}
 
 .alert {
+    font-family: 'Trebuchet MS', sans-serif;
     padding: 20px;
     background-color: #f44336;
     color: white;
@@ -96,7 +97,6 @@ ul.topnav li.right {float: right;}
 }
 
 .alert.success {background-color: #04AA6D;}
-.alert.info {background-color: #2196F3;}
 .alert.warning {background-color: #ff9800;}
 
 .closebtn {

@@ -26,8 +26,10 @@ def img_to_encod(request, path, photo, url):
 
     if len(faceEncodList) == 0:
         messages.error(request, f'Cannot Find a Face in {photo}')
+        error_message.append(f'Cannot Find a Face in {photo}')
     elif len(faceEncodList) > 1:
         messages.error(request, f'Multiple Faces in {photo}')
+        error_message.append(f'Multiple Faces in {photo}')
     else:
         encode = faceEncodList[0]
 
@@ -42,6 +44,9 @@ def convert(encod):
 
 
 def create_encodings(request):
+    global error_message
+    error_message = []
+    
     local_host = 'http://10.0.0.10:8000/'
     objects = student_profile.objects.all()
     if len(objects) > 0:
@@ -72,7 +77,10 @@ def create_encodings(request):
 
             obj.save()
 
-        messages.info(request, 'Attendance Sheet Created!')
+        if not error_message:
+            messages.success(request, 'Attendance Ready To Be Taken!')
+        else:
+            messages.warning(request, 'Please fix the problem before continuing!')
 
 
 def create_attendance():
@@ -84,11 +92,11 @@ def create_attendance():
         new_date = calendar(date=date.today())
         new_date.save()
     
-    attendance.objects.all().delete()
-    profiles = student_profile.objects.all()
-    for obj in profiles:
-        student = attendance(name=obj, grade=obj.grade)
-        student.save()
+        attendance.objects.all().delete()
+        profiles = student_profile.objects.all()
+        for obj in profiles:
+            student = attendance(name=obj, grade=obj.grade)
+            student.save()
 
 
 def home(request):

@@ -16,11 +16,25 @@
     </ul>
     <h1>Attendance Monitoring</h1>
 
-    {% for message in messages %}
-    <div class="alert success">
-        <span class="closebtn">&times;</span>  
-        <strong>SUCCESS!</strong> {{message}}
-    </div>
+    {% for message in messages %} 
+        {% if message.level == 25 %}
+            <div class="alert success"> 
+                <span class="closebtn">&times;</span>   
+                <strong>SUCCESS!</strong> {{message}} 
+            </div> 
+        
+        {% elif message.level == 30 %}
+            <div class="alert warning"> 
+                <span class="closebtn">&times;</span>   
+                <strong>WARNING!</strong> {{message}} 
+            </div> 
+
+        {% else %}
+            <div class="alert"> 
+                <span class="closebtn">&times;</span>   
+                <strong>ERROR!</strong> {{message}} 
+            </div>
+        {% endif %}
     {% endfor %}
 
     <script>

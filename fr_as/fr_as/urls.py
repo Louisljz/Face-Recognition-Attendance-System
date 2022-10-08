@@ -24,3 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('app/', include('webapp.appurls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+admin.site.site_header = "Merlion Attendance"
+admin.site.site_title = "Merlion Attendance"
+admin.site.index_title = "Administration"
