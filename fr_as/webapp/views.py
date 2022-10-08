@@ -2,6 +2,7 @@ from datetime import date
 from django.shortcuts import render
 from .models import *
 from .CreateEncods import CreateEncods
+from .aten_monitor import aten_monitor
 
 
 def create_attendance():
@@ -31,6 +32,7 @@ def stream(request):
     encodings.create_encodings(request)
     create_attendance()
     if not encodings.error_message:
-        pass
+        monitoring = aten_monitor()
+        monitoring.start()
 
     return render(request, 'stream.html')

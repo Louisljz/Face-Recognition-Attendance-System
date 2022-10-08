@@ -120,7 +120,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'webapp/templates'),
+    os.path.join(BASE_DIR, 'webapp/static'),
 ]
 
 STATIC_URL = 'static/'
@@ -130,6 +130,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, "aten_monitor/student_faces")
+MEDIA_ROOT = os.path.join(BASE_DIR, "webapp/static/student_faces")
 
 MEDIA_URL = 'media/'
