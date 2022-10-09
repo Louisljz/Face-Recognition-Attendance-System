@@ -49,7 +49,7 @@ class student_profile(models.Model):
     photoUI = models.ImageField(editable=False, blank=True)
 
     def fetch_img(self):
-        local_host = 'http://10.0.0.10:8000/'
+        local_host = 'http://127.0.0.1:8000/'
         image_url = local_host + self.photo1.url
         resp = urllib.request.urlopen(image_url)
         arr = np.asarray(bytearray(resp.read()), dtype="uint8")

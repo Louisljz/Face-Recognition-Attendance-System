@@ -6,6 +6,7 @@ from .TakeAttendance import TakeAttendance
 
 class aten_monitor(TakeAttendance):
     def __init__(self):
+        super().__init__()
         self.cap = cv2.VideoCapture(0)
 
     def start(self):
