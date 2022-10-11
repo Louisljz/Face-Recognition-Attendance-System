@@ -22,10 +22,11 @@ def create_attendance():
             student.save()
 
 def home(request):
-    if request.user_agent.is_pc:
-        return render(request, 'home.html')
-    else:
-        return redirect('admin:index')
+    # if request.user_agent.is_pc:
+    #     return render(request, 'home.html')
+    # else:
+    #     return redirect('admin:index')
+    return render(request, 'home.html')
 
 def app(request):
     if request.user_agent.is_pc:

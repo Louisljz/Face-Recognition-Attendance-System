@@ -98,7 +98,6 @@ class TakeAttendance:
             self.db_conn.commit()
 
             if current > self.late:
-                presence = False
                 self.db_conn.execute('''
                             UPDATE webapp_attendance
                             SET presence = (?)
@@ -120,13 +119,10 @@ class TakeAttendance:
                 self.db_conn.commit()
             
             else:
-                presence = True
                 self.db_conn.execute('''
                             UPDATE webapp_attendance
                             SET presence = (?)
                             WHERE name_id = (?)
                             ''', (True, id))
                 self.db_conn.commit()
-
-            return time_str, presence
 

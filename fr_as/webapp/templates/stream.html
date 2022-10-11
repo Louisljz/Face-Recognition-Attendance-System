@@ -14,6 +14,7 @@
         <li><a href="{% url 'admin:index' %}">Admin</a></li>
         <li><a href="{% url 'app' %}">App</a></li>
     </ul>
+
     <h1>Attendance Monitoring</h1>
 
     {% for message in messages %} 
@@ -36,6 +37,8 @@
             </div>
         {% endif %}
     {% endfor %}
+
+    <img class="logo" src='{% static "merlion_logo.png" %}' alt="Merlion Logo" width="200" height="110">
 
     <script>
         var close = document.getElementsByClassName("closebtn");
