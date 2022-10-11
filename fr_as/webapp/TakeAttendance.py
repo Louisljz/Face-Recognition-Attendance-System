@@ -9,7 +9,7 @@ import base64
 class TakeAttendance:
     def __init__(self):
         self.db_conn = self.create_connection()
-        self.encodeListKnown, self.classNames = self.fetch_encods()
+        self.fetch_encods()
         self.nameList = self.getNameList()
         self.late = datetime.time(7, 30, 0)
         self.date_today = datetime.datetime.now().date()
@@ -23,41 +23,36 @@ class TakeAttendance:
         except:
             print("Unable to connect to DB")
 
+    def convert(self, encoding):
+        np_bytes = base64.b64decode(encoding)
+        np_array = pickle.loads(np_bytes)
+        self.encodeListKnown.append(np_array)
+        self.classNames.append(self.label)
+
     def fetch_encods(self):
         result = self.db_conn.execute('''
         SELECT * FROM webapp_student_profile
         ''')
         record_list = result.fetchall()
 
-        classNames = []
-        encodeListKnown = []
+        self.classNames = []
+        self.encodeListKnown = []
 
         for i in range(len(record_list)):
-            label = record_list[i][1] + f' ({record_list[i][2]})'
+            self.label = record_list[i][1] + f' ({record_list[i][2]})'
             
             encoding1 = record_list[i][6]
             encoding2 = record_list[i][7]
             encoding3 = record_list[i][8]
 
             if encoding1:
-                np_bytes = base64.b64decode(encoding1)
-                np_array = pickle.loads(np_bytes)
-                encodeListKnown.append(np_array)
-                classNames.append(label)
+                self.convert(encoding1)
 
             if encoding2:
-                np_bytes = base64.b64decode(encoding2)
-                np_array = pickle.loads(np_bytes)
-                encodeListKnown.append(np_array)
-                classNames.append(label)
+                self.convert(encoding2)
 
             if encoding3:
-                np_bytes = base64.b64decode(encoding3)
-                np_array = pickle.loads(np_bytes)
-                encodeListKnown.append(np_array)
-                classNames.append(label)
-        
-        return encodeListKnown, classNames
+                self.convert(encoding3)
     
     def getNameList(self):
         nameList = []
@@ -75,21 +70,23 @@ class TakeAttendance:
                 WHERE id = (?)
                 ''', (record_list[i][4], ))
 
-                name = obj.fetchone()[0] + f' ({record_list[i][1]})'
+                name = obj.fetchone()[0]
 
                 nameList.append(name)
         
         return nameList
 
-    def markAttendance(self, label):
-        if label not in self.nameList:
+    def markAttendance(self, name, grade):
+        if name not in self.nameList:
+            self.nameList.append(name)
+            
             current = datetime.datetime.now().time()
             time_str = current.strftime('%H:%M')
 
             obj = self.db_conn.execute('''
             SELECT id FROM webapp_student_profile
             WHERE name = (?) AND grade = (?)
-            ''', (label.split('(')[0].strip(), label.split('(')[1][:-1]))
+            ''', (name, grade))
 
             id = obj.fetchone()[0]
 
@@ -100,9 +97,8 @@ class TakeAttendance:
                             ''', (time_str, id))
             self.db_conn.commit()
 
-            self.nameList.append(label)
-
             if current > self.late:
+                presence = False
                 self.db_conn.execute('''
                             UPDATE webapp_attendance
                             SET presence = (?)
@@ -124,10 +120,13 @@ class TakeAttendance:
                 self.db_conn.commit()
             
             else:
+                presence = True
                 self.db_conn.execute('''
                             UPDATE webapp_attendance
                             SET presence = (?)
                             WHERE name_id = (?)
                             ''', (True, id))
                 self.db_conn.commit()
+
+            return time_str, presence
 
