@@ -14,7 +14,7 @@ class CreateEncods:
         self.error_message = []
         
     def create_encodings(self, request):
-        local_host = 'http://10.0.0.14:8000/'
+        local_host = 'http://10.0.0.13:8000'
         objects = student_profile.objects.all()
         if len(objects) > 0:
             for obj in objects:

@@ -38,9 +38,9 @@ class student_profile(models.Model):
     name = models.CharField(max_length=50)
     grade = models.CharField(max_length=3, choices=choices)
 
-    photo1 = models.ImageField(upload_to=Rename(1).save)
-    photo2 = models.ImageField(upload_to=Rename(2).save, blank=True)
-    photo3 = models.ImageField(upload_to=Rename(3).save, blank=True)
+    photo1 = models.ImageField(upload_to=Rename(1).save, max_length=500)
+    photo2 = models.ImageField(upload_to=Rename(2).save, blank=True, max_length=500)
+    photo3 = models.ImageField(upload_to=Rename(3).save, blank=True, max_length=500)
     
     encoding1 = models.BinaryField(blank=True, null=True, editable=False)
     encoding2 = models.BinaryField(blank=True, null=True, editable=False)
@@ -49,7 +49,7 @@ class student_profile(models.Model):
     photoUI = models.ImageField(editable=False, blank=True)
 
     def fetch_img(self):
-        local_host = 'http://10.0.0.14:8000/'
+        local_host = 'http://10.0.0.13:8000'
         image_url = local_host + self.photo1.url
         resp = urllib.request.urlopen(image_url)
         arr = np.asarray(bytearray(resp.read()), dtype="uint8")
