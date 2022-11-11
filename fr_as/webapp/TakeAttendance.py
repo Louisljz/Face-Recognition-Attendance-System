@@ -8,12 +8,13 @@ import base64
 
 class TakeAttendance:
     def __init__(self):
+        self.late = datetime.time(7, 30, 0)
+        self.datetoday = datetime.datetime.now().date()
+
         self.db_conn = self.create_connection()
         self.fetch_encods()
         self.nameList = self.getNameList()
-        self.late = datetime.time(7, 30, 0)
-        self.date_today = datetime.datetime.now().date()
-
+        
     def create_connection(self):
         BASE_DIR = Path(__file__).resolve().parent.parent
         database = os.path.join(BASE_DIR, "db.sqlite3")
@@ -31,7 +32,7 @@ class TakeAttendance:
 
     def fetch_encods(self):
         result = self.db_conn.execute('''
-        SELECT * FROM webapp_student_profile
+        SELECT * FROM webapp_students
         ''')
         record_list = result.fetchall()
 
@@ -39,11 +40,15 @@ class TakeAttendance:
         self.encodeListKnown = []
 
         for i in range(len(record_list)):
-            self.label = record_list[i][1] + f' ({record_list[i][2]})'
+            obj = self.db_conn.execute('''
+            SELECT grade FROM webapp_classes
+            WHERE id = (?)
+            ''', (record_list[i][9], ))
+            self.label = record_list[i][1] + f' ({obj.fetchone()[0]})'
             
-            encoding1 = record_list[i][6]
-            encoding2 = record_list[i][7]
-            encoding3 = record_list[i][8]
+            encoding1 = record_list[i][5]
+            encoding2 = record_list[i][5]
+            encoding3 = record_list[i][7]
 
             if encoding1:
                 self.convert(encoding1)
@@ -56,73 +61,49 @@ class TakeAttendance:
     
     def getNameList(self):
         nameList = []
-        result = self.db_conn.execute('''
+
+        obj = self.db_conn.execute(r'''
         SELECT * FROM webapp_attendance
-        ''')
-        record_list = result.fetchall()
+        WHERE DATE(datetime) = (?)
+        ''', (self.datetoday, ))
 
-        for i in range(len(record_list)):
-            presence = record_list[i][2]
+        result = obj.fetchall()
 
-            if presence != None:
-                obj = self.db_conn.execute('''
-                SELECT name FROM webapp_student_profile
-                WHERE id = (?)
-                ''', (record_list[i][4], ))
+        if result:
+            for record in result:
+                nameid = record[4]
+                obj2 = self.db_conn.execute('''
+                                            SELECT name FROM webapp_students
+                                            WHERE id = (?)
+                                            ''', (nameid, ))
 
-                name = obj.fetchone()[0]
+                name = obj2.fetchone()[0]
 
                 nameList.append(name)
-        
+            
         return nameList
 
-    def markAttendance(self, name, grade):
+    def markAttendance(self, name):
         if name not in self.nameList:
             self.nameList.append(name)
-            
-            current = datetime.datetime.now().time()
-            time_str = current.strftime('%H:%M')
+            current = datetime.datetime.now()
 
             obj = self.db_conn.execute('''
-            SELECT id FROM webapp_student_profile
-            WHERE name = (?) AND grade = (?)
-            ''', (name, grade))
+            SELECT id, grade_id FROM webapp_students
+            WHERE name = (?)
+            ''', (name, ))
 
-            id = obj.fetchone()[0]
+            name_grade = obj.fetchone()
 
-            self.db_conn.execute('''
-                            UPDATE webapp_attendance
-                            SET time = (?)
-                            WHERE name_id = (?)
-                            ''', (time_str, id))
-            self.db_conn.commit()
-
-            if current > self.late:
+            if current.time() > self.late:
                 self.db_conn.execute('''
-                            UPDATE webapp_attendance
-                            SET presence = (?)
-                            WHERE name_id = (?)
-                            ''', (False, id))
-                
-                obj = self.db_conn.execute('''
-                            SELECT id FROM webapp_calendar
-                            WHERE date = (?)
-                            ''', (self.date_today, ))
-
-                cal_id = obj.fetchone()[0]
-
-                self.db_conn.execute('''
-                            INSERT INTO webapp_calendar_late_students (calendar_id, student_profile_id)
-                            VALUES (?, ?)
-                            ''', (cal_id, id))
-                
-                self.db_conn.commit()
+                            INSERT INTO webapp_attendance (status, datetime, grade_id, name_id)
+                                        VALUES ("L", ?, ?, ?)
+                            ''', (current, name_grade[1], name_grade[0]))
             
             else:
                 self.db_conn.execute('''
-                            UPDATE webapp_attendance
-                            SET presence = (?)
-                            WHERE name_id = (?)
-                            ''', (True, id))
-                self.db_conn.commit()
-
+                            INSERT INTO webapp_attendance (status, datetime, grade_id, name_id)
+                                        VALUES ("P", ?, ?, ?)
+                            ''', (current, name_grade[1], name_grade[0]))
+            self.db_conn.commit()

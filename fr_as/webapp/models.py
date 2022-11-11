@@ -94,7 +94,7 @@ class students(models.Model):
     photoUI = models.ImageField(editable=False, blank=True)
 
     def fetch_img(self):
-        local_host = 'http://172.16.21.44:8000'
+        local_host = 'http://10.0.0.13:8000'
         image_url = local_host + self.photo1.url
         resp = urllib.request.urlopen(image_url)
         arr = np.asarray(bytearray(resp.read()), dtype="uint8")
@@ -168,7 +168,7 @@ class attendance(models.Model):
 
     name = models.ForeignKey(students, on_delete=models.CASCADE)
     grade = models.ForeignKey(classes, on_delete=models.CASCADE)
-    status = models.CharField(max_length=1, choices=choices)
+    status = models.CharField(max_length=1, choices=choices, default="A")
     datetime = models.DateTimeField()
 
     def __str__(self):

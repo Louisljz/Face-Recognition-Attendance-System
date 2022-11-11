@@ -14,8 +14,8 @@ class CreateEncods:
         self.error_message = []
         
     def create_encodings(self, request):
-        local_host = 'http://172.16.21.44:8000'
-        objects = student_profile.objects.all()
+        local_host = 'http://10.0.0.13:8000'
+        objects = students.objects.all()
         if len(objects) > 0:
             for obj in objects:
                 if obj.photo1:

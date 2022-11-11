@@ -28,7 +28,7 @@ class aten_monitor(TakeAttendance):
                 if faceDis[matchIndex] < 0.50:
                     name_class = self.classNames[matchIndex]
                     name, grade = name_class.split('(')[0].strip(), name_class.split('(')[1][:-1]
-                    self.markAttendance(name, grade)
+                    self.markAttendance(name)
                     fname = name.split(' ')[0]
                     label = fname + f' ({grade})'
 
