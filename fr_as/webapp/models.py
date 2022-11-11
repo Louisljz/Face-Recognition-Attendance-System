@@ -25,18 +25,63 @@ class Rename:
         filename = f"{instance}{self.number}{ext}"
         return os.path.join(newpath, filename)
 
-
-class student_profile(models.Model):
+class academic_year(models.Model):
     choices = (
-            ('S1', 'Secondary_1'),
-            ('S2', 'Secondary_2'),
-            ('S3', 'Secondary_3'), 
-            ('S4', 'Secondary_4'), 
-            ('PU1', 'PreU_1'),
-            ('PU2', 'PreU_2')
-                                )
-    name = models.CharField(max_length=50)
+        ("2223", "2022-2023"),
+        ("2324", "2023-2024"),
+        ("2425", "2024-2025"),
+        ("2526", "2025-2026"),
+        ("2627", "2026-2027"),
+    )
+    year = models.CharField(max_length=9, choices=choices)
+
+    def __str__(self):
+        for set in self.choices:
+            if set[0] == self.year:
+                return set[1]
+
+class division(models.Model):
+    choices = (
+        ("Pri", "Primary"),
+        ("Sec", "Secondary"),
+        ("Pre-U", "Pre-University"),
+    )
+
+    ay = models.ForeignKey(academic_year, on_delete=models.CASCADE)
+    division = models.CharField(max_length=14, choices=choices)
+
+    def __str__(self):
+        for set in self.choices:
+            if set[0] == self.division:
+                return set[1]
+
+class classes(models.Model):
+    choices = []
+
+    for i in range(1,7):
+        choices.extend([("P"+str(i), "Primary "+str(i)),
+                        ("P"+str(i)+"A", "Primary "+str(i)+"A"),
+                        ("P"+str(i)+"B", "Primary "+str(i)+"B")])
+
+    for i in range(1,5):
+        choices.extend([("S"+str(i), "Secondary "+str(i))])
+
+    for i in range(1,3):
+        choices.extend([("PU"+str(i), "Pre-U "+str(i))])
+
+    choices = tuple(choices)
+
+    div = models.ForeignKey(division, on_delete=models.CASCADE)
     grade = models.CharField(max_length=3, choices=choices)
+
+    def __str__(self):
+        for set in self.choices:
+            if set[0] == self.grade:
+                return set[1]
+
+class students(models.Model):
+    name = models.CharField(max_length=100)
+    grade = models.ForeignKey(classes, on_delete=models.CASCADE)
 
     photo1 = models.ImageField(upload_to=Rename(1).save, max_length=500)
     photo2 = models.ImageField(upload_to=Rename(2).save, blank=True, max_length=500)
@@ -49,7 +94,7 @@ class student_profile(models.Model):
     photoUI = models.ImageField(editable=False, blank=True)
 
     def fetch_img(self):
-        local_host = 'http://10.0.0.13:8000'
+        local_host = 'http://172.16.21.44:8000'
         image_url = local_host + self.photo1.url
         resp = urllib.request.urlopen(image_url)
         arr = np.asarray(bytearray(resp.read()), dtype="uint8")
@@ -99,8 +144,8 @@ class student_profile(models.Model):
 
     def save(self, *args, **kwargs):
         try:
-            obj = student_profile.objects.get(pk=self.pk)
-        except student_profile.DoesNotExist:
+            obj = students.objects.get(pk=self.pk)
+        except students.DoesNotExist:
             pass 
         else:
             if not obj.photo1 == self.photo1: 
@@ -109,31 +154,22 @@ class student_profile(models.Model):
                 self.encoding2 = b''
             if not obj.photo3 == self.photo3: 
                 self.encoding3 = b''
-        super(student_profile, self).save(*args, **kwargs)
+        super(students, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name
 
-
 class attendance(models.Model):
-    name = models.ForeignKey(student_profile, on_delete=models.CASCADE)
-    grade = models.CharField(max_length=3, blank=True, null=True)
-    presence = models.BooleanField(blank=True, null=True)
-    time = models.TimeField(blank=True, null=True)
+    choices = (
+        ("P", "Present"),
+        ("A", "Absent"),
+        ("L", "Late"),
+    )
+
+    name = models.ForeignKey(students, on_delete=models.CASCADE)
+    grade = models.ForeignKey(classes, on_delete=models.CASCADE)
+    status = models.CharField(max_length=1, choices=choices)
+    datetime = models.DateTimeField()
 
     def __str__(self):
         return str(self.name)
-
-
-class calendar(models.Model):
-    date = models.DateField()
-    late_students = models.ManyToManyField(student_profile)
-
-    def get_students(self):
-        return ", ".join([student.name for student in self.late_students.all()])
-
-    get_students.short_description = 'Late Students'
-
-    def __str__(self):
-        return str(self.date)
-
