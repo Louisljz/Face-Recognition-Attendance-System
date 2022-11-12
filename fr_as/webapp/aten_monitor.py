@@ -1,12 +1,17 @@
 import cv2
 import face_recognition
 import numpy as np
+from datetime import datetime
 from .TakeAttendance import TakeAttendance
 
 
 class aten_monitor(TakeAttendance):
     def __init__(self):
         super().__init__()
+        self.status_key = {"L": "Late",
+                            "P": "Present", 
+                            "A": "Absent"}
+        self.color = (0,0,255)
         self.cap = cv2.VideoCapture(0)
 
     def start(self):
@@ -28,17 +33,32 @@ class aten_monitor(TakeAttendance):
                 if faceDis[matchIndex] < 0.50:
                     name_class = self.classNames[matchIndex]
                     name, grade = name_class.split('(')[0].strip(), name_class.split('(')[1][:-1]
-                    self.markAttendance(name)
+                    result = self.markAttendance(name)
+                    status = self.status_key[result[0]]
+                    try:
+                        time = datetime.strptime(result[1], r"%Y-%m-%d %H:%M:%S.%f").time()
+                    except ValueError:
+                        time = datetime.strptime(result[1], r"%Y-%m-%d %H:%M:%S").time()
+                    time = time.strftime("%H:%M:%S")
                     fname = name.split(' ')[0]
                     label = fname + f' ({grade})'
+                    coor1 = (150, img.shape[0]-75)
+                    coor2 = (430, img.shape[0]-50)
+                    if status == "Present":
+                        self.color = (0,255,0)
+                    else:
+                        self.color = (0,0,255)
+                    cv2.rectangle(img,coor1,coor2,self.color,cv2.FILLED)
+                    cv2.putText(img,status + " " + time,(150, img.shape[0]-50),
+                                cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
 
                 else: 
                     label = 'Unknown'
                 
                 y1,x2,y2,x1 = faceLoc
                 y1, x2, y2, x1 = y1*4,x2*4,y2*4,x1*4
-                cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0),2)
-                cv2.rectangle(img,(x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
+                cv2.rectangle(img,(x1,y1),(x2,y2),self.color,2)
+                cv2.rectangle(img,(x1,y2-35),(x2,y2),self.color,cv2.FILLED)
                 cv2.putText(img,label,(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
             
             cv2.imshow('Webcam',img)

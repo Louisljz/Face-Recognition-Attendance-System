@@ -84,16 +84,16 @@ class TakeAttendance:
         return nameList
 
     def markAttendance(self, name):
-        if name not in self.nameList:
-            self.nameList.append(name)
-            current = datetime.datetime.now()
-
-            obj = self.db_conn.execute('''
+        obj = self.db_conn.execute('''
             SELECT id, grade_id FROM webapp_students
             WHERE name = (?)
             ''', (name, ))
 
-            name_grade = obj.fetchone()
+        name_grade = obj.fetchone()
+
+        if name not in self.nameList:
+            self.nameList.append(name)
+            current = datetime.datetime.now()
 
             if current.time() > self.late:
                 self.db_conn.execute('''
@@ -107,3 +107,10 @@ class TakeAttendance:
                                         VALUES ("P", ?, ?, ?)
                             ''', (current, name_grade[1], name_grade[0]))
             self.db_conn.commit()
+
+        obj2 = self.db_conn.execute('''
+                            SELECT status, datetime FROM webapp_attendance
+                            WHERE DATE(datetime) = (?) AND name_id = (?)
+                            ''', (self.datetoday, name_grade[0]))
+
+        return obj2.fetchone()
