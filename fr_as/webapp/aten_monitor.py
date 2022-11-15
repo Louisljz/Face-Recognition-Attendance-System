@@ -1,7 +1,6 @@
 import cv2
 import face_recognition
 import numpy as np
-from datetime import datetime
 from .TakeAttendance import TakeAttendance
 
 
@@ -35,11 +34,7 @@ class aten_monitor(TakeAttendance):
                     name, grade = name_class.split('(')[0].strip(), name_class.split('(')[1][:-1]
                     result = self.markAttendance(name)
                     status = self.status_key[result[0]]
-                    try:
-                        time = datetime.strptime(result[1], r"%Y-%m-%d %H:%M:%S.%f").time()
-                    except ValueError:
-                        time = datetime.strptime(result[1], r"%Y-%m-%d %H:%M:%S").time()
-                    time = time.strftime("%H:%M:%S")
+                    time = result[1].strftime("%H:%M:%S")
                     fname = name.split(' ')[0]
                     label = fname + f' ({grade})'
                     coor1 = (150, img.shape[0]-75)

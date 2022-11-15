@@ -80,18 +80,18 @@ class classes(models.Model):
                 return set[1]
 
 class students(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=50)
     grade = models.ForeignKey(classes, on_delete=models.CASCADE)
 
-    photo1 = models.ImageField(upload_to=Rename(1).save, max_length=500)
-    photo2 = models.ImageField(upload_to=Rename(2).save, blank=True, max_length=500)
-    photo3 = models.ImageField(upload_to=Rename(3).save, blank=True, max_length=500)
+    photo1 = models.ImageField(upload_to=Rename(1).save, max_length=300)
+    photo2 = models.ImageField(upload_to=Rename(2).save, blank=True, max_length=300)
+    photo3 = models.ImageField(upload_to=Rename(3).save, blank=True, max_length=300)
     
     encoding1 = models.BinaryField(blank=True, null=True, editable=False)
     encoding2 = models.BinaryField(blank=True, null=True, editable=False)
     encoding3 = models.BinaryField(blank=True, null=True, editable=False)
 
-    photoUI = models.ImageField(editable=False, blank=True)
+    photoUI = models.ImageField(editable=False, blank=True, max_length=300)
 
     def fetch_img(self):
         local_host = 'http://10.0.0.13:8000'

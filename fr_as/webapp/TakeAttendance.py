@@ -1,7 +1,5 @@
-import os
-from pathlib import Path
 import datetime
-import sqlite3
+from django.db import connection
 import pickle
 import base64
 
@@ -9,20 +7,15 @@ import base64
 class TakeAttendance:
     def __init__(self):
         self.late = datetime.time(7, 30, 0)
-        self.datetoday = datetime.datetime.now().date()
 
-        self.db_conn = self.create_connection()
         self.fetch_encods()
         self.nameList = self.getNameList()
-        
-    def create_connection(self):
-        BASE_DIR = Path(__file__).resolve().parent.parent
-        database = os.path.join(BASE_DIR, "db.sqlite3")
-        try:
-            conn = sqlite3.connect(database)
-            return conn
-        except:
-            print("Unable to connect to DB")
+
+    def run_query(self, query):
+        cursor = connection.cursor()
+        cursor.execute(query)
+
+        return cursor
 
     def convert(self, encoding):
         np_bytes = base64.b64decode(encoding)
@@ -31,19 +24,18 @@ class TakeAttendance:
         self.classNames.append(self.label)
 
     def fetch_encods(self):
-        result = self.db_conn.execute('''
+        record_list = self.run_query('''
         SELECT * FROM webapp_students
-        ''')
-        record_list = result.fetchall()
+        ''').fetchall()
 
         self.classNames = []
         self.encodeListKnown = []
 
         for i in range(len(record_list)):
-            obj = self.db_conn.execute('''
+            obj = self.run_query(f'''
             SELECT grade FROM webapp_classes
-            WHERE id = (?)
-            ''', (record_list[i][9], ))
+            WHERE id = {record_list[i][9]}
+            ''')
             self.label = record_list[i][1] + f' ({obj.fetchone()[0]})'
             
             encoding1 = record_list[i][5]
@@ -62,21 +54,21 @@ class TakeAttendance:
     def getNameList(self):
         nameList = []
 
-        obj = self.db_conn.execute(r'''
+        obj = self.run_query(f'''
         SELECT * FROM webapp_attendance
-        WHERE DATE(datetime) = (?)
-        ''', (self.datetoday, ))
+        WHERE datetime::date = NOW()::date
+        ''')
 
         result = obj.fetchall()
 
         if result:
             for record in result:
                 nameid = record[4]
-                obj2 = self.db_conn.execute('''
-                                            SELECT name FROM webapp_students
-                                            WHERE id = (?)
-                                            ''', (nameid, ))
-
+                obj2 = self.run_query(f'''
+                                SELECT name FROM webapp_students
+                                WHERE id = {nameid}
+                                ''')
+                
                 name = obj2.fetchone()[0]
 
                 nameList.append(name)
@@ -84,10 +76,10 @@ class TakeAttendance:
         return nameList
 
     def markAttendance(self, name):
-        obj = self.db_conn.execute('''
+        obj = self.run_query(f'''
             SELECT id, grade_id FROM webapp_students
-            WHERE name = (?)
-            ''', (name, ))
+            WHERE name = '{name}'
+            ''')
 
         name_grade = obj.fetchone()
 
@@ -96,21 +88,20 @@ class TakeAttendance:
             current = datetime.datetime.now()
 
             if current.time() > self.late:
-                self.db_conn.execute('''
-                            INSERT INTO webapp_attendance (status, datetime, grade_id, name_id)
-                                        VALUES ("L", ?, ?, ?)
-                            ''', (current, name_grade[1], name_grade[0]))
+                _ = self.run_query(f'''
+                    INSERT INTO webapp_attendance (status, datetime, grade_id, name_id)
+                                VALUES ('L', '{current}', {name_grade[1]}, {name_grade[0]})
+                    ''')
             
             else:
-                self.db_conn.execute('''
-                            INSERT INTO webapp_attendance (status, datetime, grade_id, name_id)
-                                        VALUES ("P", ?, ?, ?)
-                            ''', (current, name_grade[1], name_grade[0]))
-            self.db_conn.commit()
-
-        obj2 = self.db_conn.execute('''
-                            SELECT status, datetime FROM webapp_attendance
-                            WHERE DATE(datetime) = (?) AND name_id = (?)
-                            ''', (self.datetoday, name_grade[0]))
+                _ = self.run_query(f'''
+                    INSERT INTO webapp_attendance (status, datetime, grade_id, name_id)
+                                VALUES ('P', '{current}', {name_grade[1]}, {name_grade[0]})
+                    ''')
+        
+        obj2 = self.run_query(f'''
+                        SELECT status, datetime FROM webapp_attendance
+                        WHERE datetime::date = NOW()::date AND name_id = {name_grade[0]}
+                        ''')
 
         return obj2.fetchone()
