@@ -73,6 +73,7 @@ class classes(models.Model):
 
     div = models.ForeignKey(division, on_delete=models.CASCADE)
     grade = models.CharField(max_length=3, choices=choices)
+    form_teacher = models.EmailField()
 
     def __str__(self):
         for set in self.choices:
@@ -94,7 +95,7 @@ class students(models.Model):
     photoUI = models.ImageField(editable=False, blank=True, max_length=300)
 
     def fetch_img(self):
-        local_host = 'http://10.0.0.13:8000'
+        local_host = 'http://127.0.0.1:8000'
         image_url = local_host + self.photo1.url
         resp = urllib.request.urlopen(image_url)
         arr = np.asarray(bytearray(resp.read()), dtype="uint8")
