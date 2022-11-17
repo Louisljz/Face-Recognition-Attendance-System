@@ -69,7 +69,6 @@ class aten_admin(DjangoObjectActions, admin.ModelAdmin):
 
     def getLateStudents(self):
         records = attendance.objects.all()
-        count = 0
         for record in records:
             if record.datetime.date() == self.datetoday:
                 self.nameList.append(str(record.name))
@@ -81,20 +80,23 @@ class aten_admin(DjangoObjectActions, admin.ModelAdmin):
                     self.sendEmails[email] = [[],[]]
                 
                 if record.status == "L":
-                    count += 1
                     time = record.datetime.strftime("%H:%M:%S")                
                     
-                    self.sendEmails[email][0].append(f'{count}. {record.name} : {time}\n')
+                    self.sendEmails[email][0].append(f'{record.name} : {time}\n')
     
     def getAbsentStudents(self):
-        count = 0
         for obj in students.objects.all():
             if str(obj.name) not in self.nameList:
-                email = self.getClassObj(obj.grade).form_teacher
-                if email not in self.sendEmails.keys():
-                    self.sendEmails[email] = [[],[]]
-                count += 1
-                self.sendEmails[email][1].append(f'{count}. {obj.name}\n')
+                record = attendance()
+                record.name = obj
+                record.grade = obj.grade
+                record.status = "A"
+                record.datetime = self.datetoday
+                record.save()
+            email = self.getClassObj(obj.grade).form_teacher
+            if email not in self.sendEmails.keys():
+                self.sendEmails[email] = [[],[]]
+            self.sendEmails[email][1].append(f'{obj.name}\n')
     
     def send(self, request, queryset):
         self.initialize()
