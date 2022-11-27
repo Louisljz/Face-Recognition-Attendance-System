@@ -82,25 +82,36 @@ class aten_admin(DjangoObjectActions, admin.ModelAdmin):
                 if record.status == "L":
                     time = record.datetime.strftime("%H:%M:%S")                
                     
-                    self.sendEmails[email][0].append(f'{record.name} : {time}\n')
+                    self.sendEmails[email][0].append(f'{record.name} : {time}')
     
     def getAbsentStudents(self):
+        def create_record(obj):
+            record = attendance()
+            record.name = obj
+            record.grade = obj.grade
+            record.status = "A"
+            record.datetime = self.datetoday
+            record.save()
+        
         for obj in students.objects.all():
             try:
-                attendance.objects.get(name=obj)
+                objs = attendance.objects.filter(name=obj)
+                check = []
+                for obj2 in objs:
+                    if obj2.datetime.date() != self.datetoday:
+                        check.append(True)
+                    else:
+                        check.append(False)
+                if all(check):
+                    create_record(obj)
             except:
-                record = attendance()
-                record.name = obj
-                record.grade = obj.grade
-                record.status = "A"
-                record.datetime = self.datetoday
-                record.save()
-
+                create_record(obj)
+            
             if str(obj.name) not in self.nameList:
                 email = self.getClassObj(obj.grade).form_teacher
                 if email not in self.sendEmails.keys():
                     self.sendEmails[email] = [[],[]]
-                self.sendEmails[email][1].append(f'{obj.name}\n')
+                self.sendEmails[email][1].append(f'{obj.name}')
     
     def send(self, request, queryset):
         self.initialize()
@@ -113,15 +124,27 @@ class aten_admin(DjangoObjectActions, admin.ModelAdmin):
             em['To'] = email_receiver
             em['Subject'] = subject
 
-            body = 'Late Students\n'
+            body1, body2 = "", ""
+
+            count = 0
             for student in self.sendEmails[email_receiver][0]:
-                body += student
+                count += 1
+                body1 += str(count) + ". " + student + " "
 
-            body += '\nAbsent Students:\n'
+            count = 0
             for student in self.sendEmails[email_receiver][1]:
-                body += student
+                count += 1
+                body2 += str(count) + ". " + student + " "
 
-            em.set_content(body)
+            em.add_alternative(f'''
+            <img src="https://media-exp1.licdn.com/dms/image/C4E16AQF6N5Q-NKu9hg/profile-displaybackgroundimage-shrink_200_800/0/1615782069425?e=2147483647&v=beta&t=CMcupPyTebZ9wHQ51M9vq9a6YVMTSlwFrxnsoyfxpks" alt="Merlion School Header">
+            <h1>{subject}</h1>
+            <h2><u>Late Students</u></h2>
+            <h3><i>{body1}</i></h3>
+            <h2><u>Absent Students</u></h2>
+            <h3><i>{body2}</i></h3>
+            ''', subtype='html')
+
             self.smtp.sendmail(self.email_sender, email_receiver, em.as_string())
 
     changelist_actions = ['send']
