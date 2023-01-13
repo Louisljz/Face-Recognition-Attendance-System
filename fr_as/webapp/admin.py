@@ -23,6 +23,7 @@ class stud_admin(DjangoObjectActions, admin.ModelAdmin):
 class aten_admin(DjangoObjectActions, admin.ModelAdmin):
     list_display = ["name", "grade", "status", "datetime"]
     list_filter = ["grade", "status", "datetime"]
+    search_fields = ["name__name"]
 
     def initialize(self):
         self.choices = self.generate_choices()

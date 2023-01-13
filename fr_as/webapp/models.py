@@ -139,7 +139,7 @@ class students(models.Model):
             self.photoUI = filepath
             self.save()
 
-        return mark_safe('<img src="{}"/>'.format(self.photoUI.url))
+        return mark_safe(f'<img src="{self.photoUI.url}"/>')
 
     image_tag.short_description = 'Face'
 
