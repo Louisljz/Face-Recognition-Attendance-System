@@ -1,10 +1,7 @@
 Django
-pillow
+django-cleanup
 django-object-actions
 django_user_agents
-django-cleanup
-opencv-python
-imutils
-cmake
-dlib
 face-recognition
+imutils
+pillow

@@ -23,7 +23,7 @@ class Rename:
         
         ext = os.path.splitext(filename)[1]
         filename = f"{instance}{self.number}{ext}"
-        return os.path.join(newpath, filename)
+        return os.path.join(alphabet, filename)
 
 class academic_year(models.Model):
     choices = (
@@ -105,8 +105,9 @@ class students(models.Model):
     def set_filepath(self):
         path = os.path.join(MEDIA_ROOT, 'PhotoUI')
         filename = self.name + '_PhotoUI.jpg'
-        filepath = os.path.join(path, filename)
-        return filepath
+        abs_path = os.path.join(path, filename)
+        rel_path = os.path.join('PhotoUI', filename)
+        return abs_path, rel_path
 
     def insert_text(self, img, filepath, text):
         image = imutils.resize(img, width=200)
@@ -116,7 +117,7 @@ class students(models.Model):
     def image_tag(self):
         if self.photo1:
             img = self.fetch_img()
-            filepath = self.set_filepath()
+            abs_path, rel_path = self.set_filepath()
             resized_img = imutils.resize(img, width=500)
             faceLocList = face_recognition.face_locations(resized_img)
 
@@ -126,17 +127,17 @@ class students(models.Model):
                 cropped_img = resized_img[y1:y2, x1:x2]
 
                 face_img = imutils.resize(cropped_img, width=200)
-                cv2.imwrite(filepath, face_img)
+                cv2.imwrite(abs_path, face_img)
 
             elif len(faceLocList) > 1:
                 text = 'MANY FACES'
-                self.insert_text(resized_img, filepath, text)
+                self.insert_text(resized_img, abs_path, text)
             
             else:
                 text = 'NO FACE'
-                self.insert_text(resized_img, filepath, text)
+                self.insert_text(resized_img, abs_path, text)
 
-            self.photoUI = filepath
+            self.photoUI = rel_path
             self.save()
 
         return mark_safe(f'<img src="{self.photoUI.url}"/>')
