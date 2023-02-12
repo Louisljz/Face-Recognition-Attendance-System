@@ -15,9 +15,6 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Installation
-RUN pip install opencv-python dlib psycopg2
-
 # MAIN
 WORKDIR /code
 

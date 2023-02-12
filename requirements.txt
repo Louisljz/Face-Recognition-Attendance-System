@@ -2,6 +2,9 @@ Django
 django-cleanup
 django-object-actions
 django_user_agents
+psycopg2
+dlib
 face-recognition
+opencv-python
 imutils
 pillow
